@@ -65,3 +65,5 @@ scripts/      icon generator, demo-video recorder
 - The video scan assumes a steady turn on the spot with the phone held at the stated height and tilt. Plain white rooms, clutter along the walls, mirrors and low light reduce accuracy. Rooms come out as rectangles — reshape L-shaped rooms in the editor.
 - Furniture recognition gives the category and an approximate position only.
 - The object-detection model adds about 18 MB, downloaded the first time a video is scanned.
+
+See [TODO.md](TODO.md) for known minor issues and follow-ups.
