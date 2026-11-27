@@ -66,4 +66,6 @@ scripts/      icon generator, demo-video recorder
 - Furniture recognition gives the category and an approximate position only.
 - The object-detection model adds about 18 MB, downloaded the first time a video is scanned.
 
-See [TODO.md](TODO.md) for known minor issues and follow-ups.
+See [docs/TODO.md](docs/TODO.md) for known minor issues and follow-ups.
+
+See [docs/RISKS.md](docs/RISKS.md) for the inherent risks of using and sharing the app.
