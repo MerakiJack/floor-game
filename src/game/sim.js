@@ -282,7 +282,7 @@ export class Sim {
           const d = Math.hypot(it.x - P.x, it.y - P.y);
           const ang = Math.atan2(it.x - P.x, -(it.y - P.y));
           const da = Math.abs(((ang - P.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
-          if (d < 3.6 && da < 0.75 && this.nav.los(P.x, P.y, it.x, it.y, this.seeThrough)) {
+          if (d < 3.6 && da < 0.75 && this.nav.los(P.x, P.y, it.x, it.y, this.isOpen)) { // not through glass
             it.stun = 7; it.grab = 0; it.work = null; this.scare(it, 55); hit = true;
           }
         }

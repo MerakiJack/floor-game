@@ -37,7 +37,7 @@ export class Game {
     const canvas = this.$('.g-canvas');
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }));
     r.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.quality === 'high' ? 2 : 1.5));
-    r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = cfg.preview ? 1.0 : 1.25;
+    r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = cfg.preview ? 0.92 : 1.2;
     r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = (this.scene = new THREE.Scene());
@@ -53,10 +53,10 @@ export class Game {
     this.torch.castShadow = true; this.torch.shadow.mapSize.setScalar(1024); this.torch.shadow.bias = -0.002;
     this.camera.add(this.torch, this.torch.target);
     // a faint personal glow so the player can always just make out their surroundings
-    this.aura = new THREE.PointLight(0x8aa0d0, cfg.preview ? 0 : 0.6, 6, 1.5); this.camera.add(this.aura);
+    this.aura = new THREE.PointLight(0x8aa0d0, cfg.preview ? 0 : 1.0, 6, 1.5); this.camera.add(this.aura);
 
     // overhead fill light so the night-time 3D map stays readable
-    this.tacLight = new THREE.DirectionalLight(0xc8d4ff, 1.5); this.tacLight.position.set(this.world.center.x + 4, 30, this.world.center.z + 6); this.tacLight.target.position.copy(this.world.center); this.tacLight.visible = false; scene.add(this.tacLight, this.tacLight.target);
+    this.tacLight = new THREE.DirectionalLight(0xc8d4ff, 0.9); this.tacLight.position.set(this.world.center.x + 4, 30, this.world.center.z + 6); this.tacLight.target.position.copy(this.world.center); this.tacLight.visible = false; scene.add(this.tacLight, this.tacLight.target);
     this.fogDensity = scene.fog.density;
     this.pitch = 0; this.tactical = false; this.orbit = 0.6; this.eye = 1.6;
     this.keys = new Set(); this.joy = { x: 0, y: 0 }; this.toasts = []; this.actSig = ''; this.endT = -1; this.ended = false;
@@ -283,7 +283,7 @@ export class Game {
       else if (e.type === 'end') this.endT = s.outcome.id === 'caught' ? 1.6 : 3.2;
     }
     this.sfx.loop('siren', s.alarm.on && !this.ended); this.sfx.loop('car', s.carAlarm > 0 && !this.ended);
-    if (this.endT > 0) { this.endT -= dt; if (this.endT <= 0 && !this.ended) { this.ended = true; this.sfx.stopAll(); if (xr) this.renderer.xr.getSession().end().catch(() => {}); this.onEnd?.(s.outcome); } }
+    if (this.endT > 0) { this.endT -= dt; if (this.endT <= 0 && !this.ended) { this.ended = true; this.sfx.stopAll(); if (xr) this.renderer.xr.getSession().end().catch(() => {}); this.onEnd?.(s.outcome); if (this.disposed) return; } }
 
     // camera
     const eye = P.hidden ? 0.75 : P.sneak ? 1.2 : 1.6; this.eye += (eye - this.eye) * Math.min(1, dt * 8);
@@ -292,8 +292,7 @@ export class Game {
     this.torch.visible = P.torch; this.torch.intensity = 70;
     const tact = this.tactical && !xr;
     this.world.ceilings.visible = !tact;
-    this.world.hemi.intensity = s.cfg.preview ? 1.1 : 0.55;
-    this.tacLight.visible = tact && !s.cfg.preview; this.scene.fog.density = tact ? 0.003 : this.fogDensity;
+        this.tacLight.visible = tact && !s.cfg.preview; this.scene.fog.density = tact ? 0.003 : this.fogDensity;
     this.world.update(dt, !tact);
     if (tact) {
       if (!this.keys.size) this.orbit += dt * 0.12;
@@ -308,6 +307,7 @@ export class Game {
   }
 
   dispose() {
+    this.disposed = true;
     this.renderer.setAnimationLoop(null); this.sfx.stopAll();
     for (const f of this.unbind || []) f();
     this.renderer.dispose(); this.el.innerHTML = ''; this.el.classList.remove('game');

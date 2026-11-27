@@ -5,6 +5,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 16px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; overscroll-behavior: none; }
 #app { position: fixed; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
 #app.screen { padding-top: var(--st); }
@@ -116,5 +117,5 @@ label.check input { width: 1.2rem; height: 1.2rem; }
   .toast { font-size: .84rem; }
   .g-busy { top: 46%; }
 }
-@media (max-width: 520px) { .g-actions { width: 58vw; } .g-actions button { font-size: .76rem; min-height: 40px; } .stats b { font-size: 1.1rem; } h1 { font-size: 1.6rem; } }
+@media (max-width: 520px) { .stats b { font-size: 1.1rem; } h1 { font-size: 1.6rem; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }

@@ -104,9 +104,9 @@ export class World {
     const day = preview;
 
     // --- sky & ambient ---
-    this.hemi = new THREE.HemisphereLight(day ? 0xbfd6ff : 0x33405f, day ? 0x555040 : 0x0c0d12, day ? 1.1 : 0.55);
+    this.hemi = new THREE.HemisphereLight(day ? 0xbfd6ff : 0x33405f, day ? 0x555040 : 0x0c0d12, day ? 0.75 : 0.55);
     root.add(this.hemi);
-    const moon = (this.moon = new THREE.DirectionalLight(day ? 0xfff1d6 : 0x8fa8dc, day ? 2.4 : 0.9));
+    const moon = (this.moon = new THREE.DirectionalLight(day ? 0xfff1d6 : 0x8fa8dc, day ? 2.0 : 0.9));
     moon.position.set(this.center.x - 14, 22, this.center.z - 9); moon.target.position.copy(this.center);
     if (shadows) {
       moon.castShadow = true; moon.shadow.mapSize.setScalar(2048);
@@ -146,7 +146,7 @@ export class World {
       bulb.position.set(c[0], WALL_H - 0.04, c[1]); root.add(bulb);
       let light = null;
       if (byArea.indexOf(r) < 8) { light = new THREE.PointLight(0xffe0b0, 0, 11, 1.6); light.position.set(c[0], WALL_H - 0.35, c[1]); root.add(light); }
-      this.roomLights[r.id] = { light, bulb, power: Math.sqrt(polyArea(r.poly)) * 3.2 + 5 };
+      this.roomLights[r.id] = { light, bulb, power: Math.sqrt(polyArea(r.poly)) * 1.5 + 3 };
     }
 
     // --- walls ---
@@ -215,7 +215,7 @@ export class World {
     }
 
     // --- exterior effect lights ---
-    this.floods = [[b.x0 - 1, b.y0 - 1], [b.x1 + 1, b.y1 + 1]].map(([x, z]) => { const l = new THREE.PointLight(0xf4f8ff, 0, 30, 1.2); l.position.set(x, 3.4, z); root.add(l); return l; });
+    this.floods = [[b.x0 - 1, b.y0 - 1], [b.x1 + 1, b.y1 + 1]].map(([x, z]) => { const l = new THREE.PointLight(0xf4f8ff, 0, 15, 1.6); l.position.set(x, 3.4, z); root.add(l); return l; });
     this.police = [0xff2030, 0x2050ff].map((c, i) => { const l = new THREE.PointLight(c, 0, 45, 1.1); l.position.set(b.x0 - 3 + i * 1.5, 1.6, b.y1 + 4); root.add(l); return l; });
     this.sirenLight = new THREE.PointLight(0xff3020, 0, 14, 1.4); this.sirenLight.position.set(this.center.x, WALL_H - 0.3, this.center.z); root.add(this.sirenLight);
     this.thrown = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), flat(0xd8d8d8, 0.4, 0.5)); this.thrown.visible = false; root.add(this.thrown);
@@ -258,10 +258,10 @@ export class World {
       if (it.taken && m.userData.loot) for (const l of m.userData.loot) l.visible = false;
       if (m.userData.lamps) for (const l of m.userData.lamps) l.material.emissiveIntensity = sim.carAlarm > 0 && Math.sin(this.time * 12) > 0 ? 6 : 0;
     }
-    for (const l of this.floods) l.intensity += ((this.floodOn ? 160 : 0) - l.intensity) * Math.min(1, dt * 12);
+    for (const l of this.floods) l.intensity += ((this.floodOn ? 60 : 0) - l.intensity) * Math.min(1, dt * 12);
     const pol = sim.police.arrived || (sim.police.called && sim.police.eta < 8);
-    this.police[0].intensity = pol && Math.sin(this.time * 9) > 0 ? 260 : 0;
-    this.police[1].intensity = pol && Math.sin(this.time * 9) <= 0 ? 260 : 0;
+    this.police[0].intensity = pol && Math.sin(this.time * 9) > 0 ? 140 : 0;
+    this.police[1].intensity = pol && Math.sin(this.time * 9) <= 0 ? 140 : 0;
     this.sirenLight.intensity = sim.alarm.on ? 14 + Math.sin(this.time * 10) * 14 : 0;
     if (this.thrown.visible) { this.thrownT -= dt; if (this.thrownT < 0) this.thrown.visible = false; }
   }

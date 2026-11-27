@@ -228,7 +228,7 @@ export function liveScanScreen(el, { onRoom, onBack }) {
   $('.l-start').onclick = async () => {
     try {
       if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
-        if ((await DeviceOrientationEvent.requestPermission()) !== 'granted') throw new Error('Motion access was denied.');
+        if ((await DeviceOrientationEvent.requestPermission()) !== 'granted') throw new Error('motion access was denied. Allow “Motion & Orientation Access” for this site and try again.');
       }
       window.addEventListener('deviceorientation', onOri, true);
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
