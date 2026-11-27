@@ -4,7 +4,9 @@ Film your home, turn it into a 2D floor plan, then rehearse how you would handle
 
 It is an installable web app (PWA): open it in the browser and add it to the home screen. Everything runs on the device; video is never uploaded.
 
-![Feature tour](docs/demo.mp4)
+**[Watch the feature tour (docs/demo.mp4)](docs/demo.mp4)**
+
+![Outside view](docs/outside.jpg)
 
 ## What it does
 
@@ -13,7 +15,7 @@ It is an installable web app (PWA): open it in the browser and add it to the hom
 | **Scan** | **From video** – film one slow turn on the spot in each room. The app tracks how the walls slide past to measure rotation, finds the floor–wall line to measure distance, and fits the room outline. A small on-device model recognises furniture by rough category (couch, chair, table, bed, TV, fridge, toilet, plant…) and places it in the room. |
 | | **Live corner scan** – aim the crosshair at each floor corner and tap. Uses the phone's compass and tilt sensors, so it is the more accurate option on a phone. |
 | **Plan** | 2D editor: drag rooms together, resize by dragging corners, draw rooms, tap walls to add doors and windows, place furniture, hiding spots and valuables. Share a plan as a link or a JSON file (scan on the phone, play on the headset). |
-| **Walk** | Daylight 3D walk-through of the plan, plus an orbiting 3D map. |
+| **Walk** | Daylight 3D walk-through with image-based lighting, sun shadows, procedural PBR textures, roof, garden and sky. Three cameras: first person, cut-away 3D map, and an outside view of the house. |
 | **Drill** | Night-time home-invasion simulation in your own floor plan. Pick the intruder (opportunist, determined burglar, aggressive; 1–3 of them), spend a budget on 14 home defences, then respond in real time. |
 
 ### Ways to handle the invasion

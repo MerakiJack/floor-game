@@ -127,13 +127,15 @@ await click('.back', 0.4);
 // ---------------------------------------------------------------- 5. daytime walk-through (sample house)
 await section(async () => {
 await click('[data-go=sample]', 1);
-await cap('3 · Walk through the plan in 3D — procedural PBR textures, shadows');
+await cap('3 · Walk through your home in 3D — realistic lighting and textures');
 await p.evaluate(() => window.__app.play({ preview: true })); await gameReady();
 await look(0.5); await run(1);
 await walk(5, 5.8); await walk(3, 3); await look(-0.9); await run(1.5); await look(1.6); await run(1.2);
 await walk(7.8, 2.2, 8); await look(2.4); await run(1.2);
-await cap('3D map view — orbit the whole house');
-await p.evaluate(() => { window.__game.toggleView(); window.__bot.look = null; }); await run(5);
+await cap('Cut-away 3D map — orbit the whole house');
+await p.evaluate(() => { window.__game.toggleView(); window.__bot.look = null; window.__game.orbit = 0.7; }); await run(4.5);
+await cap('Outside view — roof, garden, sky and sun shadows');
+await p.evaluate(() => { window.__game.toggleView(); window.__game.orbit = 2.2; }); await run(5);
 await click('[data-b=exit]', 0.4);
 
 });
@@ -157,7 +159,7 @@ await cap('Option: room lights'); await act('light'); await run(1.5); await act(
 await cap('Option: lock and barricade the door'); await walk(2.2, 7.3, 4); await look(0); await run(0.4); await act('lock'); await run(0.8); await act('barricade'); await run(3);
 await cap('Option: smart-lock every door in the house'); await act('smartlock'); await run(1.5);
 console.log('  ', await state());
-await cap('3D map: security cameras show the intruder breaking in'); await p.evaluate(() => window.__game?.toggleView()); await run(6); await p.evaluate(() => window.__game?.toggleView());
+await cap('3D map: security cameras show the intruder breaking in'); await p.evaluate(() => window.__game?.toggleView()); await run(4); await p.evaluate(() => window.__game?.toggleView()); await cap('Outside view at night'); await run(3); await p.evaluate(() => window.__game?.toggleView());
 await cap('Option: hide (under the bed / in the wardrobe)'); await walk(2.2, 8.6, 4); await act('hide'); await run(2.5); await act('hide');
 await cap('Option: shout a warning'); await act('shout'); await run(1.8);
 await cap('Option: panic button — siren'); await act('panic'); await run(2);

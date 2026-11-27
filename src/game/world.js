@@ -104,7 +104,7 @@ export class World {
     const day = preview;
 
     // --- sky & ambient ---
-    this.hemi = new THREE.HemisphereLight(day ? 0xbfd6ff : 0x33405f, day ? 0x555040 : 0x0c0d12, day ? 0.75 : 0.55);
+    this.hemi = new THREE.HemisphereLight(day ? 0xbfd6ff : 0x33405f, day ? 0x555040 : 0x0c0d12, day ? 0.35 : 0.4);
     root.add(this.hemi);
     const moon = (this.moon = new THREE.DirectionalLight(day ? 0xfff1d6 : 0x8fa8dc, day ? 2.0 : 0.9));
     moon.position.set(this.center.x - 14, 22, this.center.z - 9); moon.target.position.copy(this.center);
@@ -122,6 +122,19 @@ export class World {
       }
       const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(stars, 3));
       root.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xcfd8ff, size: 0.45, fog: false })));
+    }
+
+    // --- sky dome: vertical gradient, brighter towards the horizon ---
+    const sky = new THREE.Mesh(new THREE.SphereGeometry(160, 24, 12), new THREE.ShaderMaterial({
+      side: THREE.BackSide, depthWrite: false, fog: false,
+      uniforms: { top: { value: new THREE.Color(day ? 0x3f7fd0 : 0x02040c) }, horizon: { value: new THREE.Color(day ? 0xcfe3f7 : 0x141d38) } },
+      vertexShader: 'varying float h; void main(){ h = normalize(position).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform vec3 top; uniform vec3 horizon; varying float h; void main(){ gl_FragColor = vec4(mix(horizon, top, pow(clamp(h, 0.0, 1.0), 0.55)), 1.0); }',
+    }));
+    sky.position.copy(this.center); root.add(sky);
+    if (!day) {
+      const disc = new THREE.Mesh(new THREE.CircleGeometry(4.5, 32), new THREE.MeshBasicMaterial({ color: 0xf2f4ff, fog: false }));
+      disc.position.set(this.center.x - 70, 95, this.center.z - 45); disc.lookAt(this.center); root.add(disc);
     }
 
     // --- ground ---
@@ -149,8 +162,35 @@ export class World {
       this.roomLights[r.id] = { light, bulb, power: Math.sqrt(polyArea(r.poly)) * 1.5 + 3 };
     }
 
+    // --- roof: a flat slab with an overhang over every room (hidden in the cut-away map) ---
+    this.roof = new THREE.Group(); root.add(this.roof);
+    const roofTop = flat(0x3a3d42, 0.9), fascia = flat(0xe9e6df, 0.7);
+    for (const r of plan.rooms) {
+      const xs = r.poly.map((p) => p[0]), ys = r.poly.map((p) => p[1]);
+      const x0 = Math.min(...xs) - 0.35, x1 = Math.max(...xs) + 0.35, y0 = Math.min(...ys) - 0.35, y1 = Math.max(...ys) + 0.35;
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 0.22, y1 - y0), [fascia, fascia, roofTop, fascia, fascia, fascia]);
+      slab.position.set((x0 + x1) / 2, WALL_H + 0.13, (y0 + y1) / 2); slab.castShadow = true; this.roof.add(slab);
+    }
+
+    // --- garden: paths to the entry doors, shrubs and trees (decorative, no collision) ---
+    const pathM = material('concrete'), leaf = flat(0x2c5a2e, 0.95), bark = flat(0x4a3523, 0.95);
+    for (const p of sim.portals) {
+      if (p.type !== 'entry' || !p.out) continue;
+      const ox = Math.sign(p.out[0] - p.x) || 0, oz = Math.sign(p.out[1] - p.y) || 0;
+      const path = new THREE.Mesh(boxUV(ox ? 4.4 : 1.3, 0.04, oz ? 4.4 : 1.3), pathM);
+      path.position.set(p.x + ox * 2.3, 0, p.y + oz * 2.3); path.receiveShadow = true; root.add(path);
+    }
+    let seed = 11; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    for (let i = 0; i < 9; i++) {
+      const a = (i / 9) * Math.PI * 2 + rnd() * 0.4, d = this.radius + 9 + rnd() * 6, h = 2.2 + rnd() * 1.6;
+      const tree = new THREE.Group();
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.2, h, 8), bark); trunk.position.y = h / 2; trunk.castShadow = true;
+      const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5 + rnd() * 0.7, 1), leaf); crown.position.y = h + 1; crown.scale.y = 1.15; crown.castShadow = true;
+      tree.add(trunk, crown); tree.position.set(this.center.x + Math.cos(a) * d, 0, this.center.z + Math.sin(a) * d); root.add(tree);
+    }
+
     // --- walls ---
-    const plaster = material('plaster'), brick = material('brick');
+    const plaster = material('plaster'), brick = material('brick'), skirt = flat(0xf3f1ec, 0.5);
     const addWall = (wall, t0, t1, y0, y1) => {
       if (t1 - t0 < 0.01 || y1 - y0 < 0.01) return;
       const mats = [plaster, plaster, plaster, plaster, plaster, plaster];
@@ -160,6 +200,10 @@ export class World {
       m.position.set(wall.a[0] + wall.dir[0] * tm, (y0 + y1) / 2, wall.a[1] + wall.dir[1] * tm);
       m.rotation.y = -Math.atan2(wall.dir[1], wall.dir[0]);
       m.castShadow = m.receiveShadow = true; root.add(m);
+      if (y0 === 0 && y1 === WALL_H) { // skirting board along the foot of the wall
+        const sk = new THREE.Mesh(new THREE.BoxGeometry(t1 - t0, 0.09, THICK + 0.03), skirt);
+        sk.position.set(m.position.x, 0.045, m.position.z); sk.rotation.y = m.rotation.y; root.add(sk);
+      }
     };
     const ext = THICK / 2 - 0.002;
     for (const wall of walls) {

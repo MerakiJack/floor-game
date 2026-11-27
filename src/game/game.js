@@ -4,6 +4,7 @@ import { Sim } from './sim.js';
 import { World } from './world.js';
 import { Sfx } from './audio.js';
 import { planBounds } from '../plan/model.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 const HUD_HTML = `
 <canvas class="g-canvas"></canvas>
@@ -11,7 +12,7 @@ const HUD_HTML = `
 <div class="g-top">
   <div class="g-btns">
     <button data-b="exit" aria-label="Exit">✕</button>
-    <button data-b="view" aria-label="Toggle view">3D map</button>
+    <button data-b="view" aria-label="Change view">3D map</button>
     <button data-b="mute" aria-label="Sound">Sound on</button>
     <button data-b="vr" hidden>Enter VR</button>
   </div>
@@ -41,10 +42,15 @@ export class Game {
     r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = (this.scene = new THREE.Scene());
-    const sky = cfg.preview ? 0x9ec4ee : 0x060913;
+    const sky = cfg.preview ? 0xcfe3f7 : 0x0b1124;
     scene.background = new THREE.Color(sky); scene.fog = new THREE.FogExp2(sky, cfg.preview ? 0.006 : 0.02);
     this.world = new World(this.sim, { shadows: true, preview: cfg.preview });
     scene.add(this.world.root);
+
+    // image-based lighting: soft, directional ambient light and reflections for the PBR materials
+    const pmrem = new THREE.PMREMGenerator(r);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; pmrem.dispose();
+    scene.environmentIntensity = cfg.preview ? 0.55 : 0.07;
 
     this.rig = new THREE.Group(); this.head = new THREE.Group(); this.rig.add(this.head); scene.add(this.rig);
     this.camera = new THREE.PerspectiveCamera(70, 1, 0.05, 200); this.head.add(this.camera);
@@ -112,7 +118,11 @@ export class Game {
     });
     on(this.$('.g-map'), 'click', () => this.toggleView());
   }
-  toggleView() { this.tactical = !this.tactical; this.$('[data-b=view]').textContent = this.tactical ? 'First person' : '3D map'; }
+  /** Cycle: first person -> cut-away 3D map -> outside view of the house. */
+  toggleView() {
+    this.view = ((this.view || 0) + 1) % 3; this.tactical = this.view > 0;
+    this.$('[data-b=view]').textContent = ['3D map', 'Outside view', 'First person'][this.view];
+  }
   resize() {
     const w = this.el.clientWidth || innerWidth, h = this.el.clientHeight || innerHeight, a = w / h;
     if (!this.renderer.xr.isPresenting) this.renderer.setSize(w, h, false);
@@ -141,7 +151,7 @@ export class Game {
       return c;
     });
     r.xr.addEventListener('sessionstart', () => {
-      this.tactical = false; this.head.position.y = 0; this.camera.rotation.set(0, 0, 0); this.panelPivot.visible = true;
+      this.tactical = false; this.view = 0; this.head.position.y = 0; this.camera.rotation.set(0, 0, 0); this.panelPivot.visible = true;
       this.torch.castShadow = false; r.xr.setFoveation?.(1); this.sfx.unlock();
       // headsets render every frame twice: keep the (mostly static) moon shadow map from re-rendering each frame
       r.shadowMap.autoUpdate = false; this.shadowTick = 0;
@@ -291,15 +301,20 @@ export class Game {
     if (xr) this.rig.rotation.y = -this.rigYaw; else { this.rig.rotation.y = -P.yaw; this.head.position.y = this.eye + (P.moving ? Math.sin(this.world.time * 10) * 0.025 : 0); this.camera.rotation.x = this.pitch; }
     this.torch.visible = P.torch; this.torch.intensity = 70;
     const tact = this.tactical && !xr;
-    this.world.ceilings.visible = !tact;
-        this.tacLight.visible = tact && !s.cfg.preview; this.scene.fog.density = tact ? 0.003 : this.fogDensity;
+    const cut = tact && this.view === 1;
+    this.world.ceilings.visible = !cut; this.world.roof.visible = !cut;
+        this.tacLight.visible = cut && !s.cfg.preview; this.scene.fog.density = tact ? 0.003 : this.fogDensity;
     this.world.update(dt, !tact);
+    this.world.playerFig.visible = cut;
     if (tact) {
       if (!this.keys.size) this.orbit += dt * 0.12;
       // back off far enough that the whole house fits the narrower of the two view angles
       const c = this.world.center, half = Math.min(Math.tan((25 * Math.PI) / 180), Math.tan((25 * Math.PI) / 180) * this.tcam.aspect);
       const D = (this.world.radius * 1.25 + 1.5) / half;
-      this.tcam.position.set(c.x + Math.sin(this.orbit) * D * 0.66, D * 0.75, c.z + Math.cos(this.orbit) * D * 0.66); this.tcam.lookAt(c.x, 0.5, c.z);
+      if (cut) { this.tcam.position.set(c.x + Math.sin(this.orbit) * D * 0.66, D * 0.75, c.z + Math.cos(this.orbit) * D * 0.66); this.tcam.lookAt(c.x, 0.5, c.z); } else {
+        // outside view: a low orbit at roughly eye level across the garden
+        this.tcam.position.set(c.x + Math.sin(this.orbit) * D * 0.82, 2.2 + D * 0.12, c.z + Math.cos(this.orbit) * D * 0.82); this.tcam.lookAt(c.x, 1.4, c.z);
+      }
     }
     if (xr && (this.shadowTick -= dt) <= 0) { this.shadowTick = 0.5; this.renderer.shadowMap.needsUpdate = true; }
     this.updateHUD(dt);
