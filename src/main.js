@@ -236,7 +236,8 @@ function debrief(o, cfg) {
     if (o.stolen) tips.push('Valuables were taken. A bolted safe, an alarm and stronger entry points all buy time until help arrives.');
     if (!cfg.upgrades.includes('alarm')) tips.push('An audible alarm ends most break-ins within a minute — try a drill with one installed.');
     if (!cfg.upgrades.includes('deadbolt') && !cfg.upgrades.includes('winlock')) tips.push('Your doors and windows gave way quickly. Deadbolts, long strike-plate screws and window locks are cheap and effective.');
-    if (o.id === 'arrest' || o.id === 'deterred') tips.push('Textbook: layered defences and early detection meant you never had to face anyone.');
+    if ((o.id === 'arrest' || o.id === 'deterred') && !o.spotted) tips.push('Textbook: layered defences and early detection meant you never had to face anyone.');
+    if (o.id === 'arrest' && o.spotted) tips.push('Help arrived in time because you called early and kept barriers between you and the intruder.');
     if (o.id === 'escaped') tips.push('Getting out and going to a neighbour is a strong choice whenever there is a safe exit.');
     el.innerHTML = `
     <div class="scroll pad debrief">
